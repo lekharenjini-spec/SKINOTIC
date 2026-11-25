@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:material_ui/material_ui.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-
+import 'dart:typed_data';
 import 'ingredient_data.dart';
 
 class PhotoAnalysisPage extends StatefulWidget {
@@ -21,6 +21,7 @@ class _PhotoAnalysisPageState extends State<PhotoAnalysisPage> {
   final TextRecognizer recognizer =
       TextRecognizer(script: TextRecognitionScript.latin);
 
+  Uint8List? selectedImageBytes;
   File? selectedImage;
 
   String extractedText = '';
@@ -38,14 +39,16 @@ class _PhotoAnalysisPageState extends State<PhotoAnalysisPage> {
         imageQuality: 90,
       );
 
-      if (image == null) return;
+     if (image == null) return;
 
-      setState(() {
-        selectedImage = File(image.path);
-        extractedText = '';
-        matchedIngredients = [];
-        unknownIngredients = [];
-      });
+     final bytes = await image.readAsBytes();
+
+     setState(() {
+      selectedImageBytes = bytes;
+      extractedText = '';
+      matchedIngredients = [];
+      unknownIngredients = [];
+     }); 
 
       await analyzePhoto(image.path);
     } catch (e) {
@@ -218,11 +221,11 @@ class _PhotoAnalysisPageState extends State<PhotoAnalysisPage> {
             const SizedBox(height: 20),
 
             // Selected photograph
-            if (selectedImage != null)
+            if (selectedImageBytes != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(15),
-                child: Image.file(
-                  selectedImage!,
+                child: Image.memory(
+                  selectedImageBytes!,
                   width: double.infinity,
                   height: 220,
                   fit: BoxFit.contain,
